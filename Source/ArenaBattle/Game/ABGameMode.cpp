@@ -7,8 +7,8 @@
 AABGameMode::AABGameMode()
 {
 	// Default Pawn Class
-	static ConstructorHelpers::FClassFinder<APawn> ThirdPersonClassRef(
-		TEXT("/Game/ThirdPerson/Blueprints/BP_ThirdPersonCharacter.BP_ThirdPersonCharacter_C"));
+	static ConstructorHelpers::FClassFinder<APawn> ThirdPersonClassRef(TEXT(
+		"/Script/ArenaBattle.ABCharacterPlayer"));
 
 	if (ThirdPersonClassRef.Class)
 	{
