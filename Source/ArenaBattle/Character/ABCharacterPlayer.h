@@ -26,6 +26,9 @@ protected:
 protected:
 
     virtual void SetCharacterControlData(const class UABCharacterControlData* CharacterControlData) override;
+    void SetCharacterControl(ECharacterControlType NewCharacterControlType);
+
+    ECharacterControlType CurrentCharacterControlType;
 
     // Camera Section
 protected:

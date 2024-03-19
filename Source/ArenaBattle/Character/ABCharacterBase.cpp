@@ -34,7 +34,7 @@ AABCharacterBase::AABCharacterBase()
 
 	// SkeletalMesh
 	static ConstructorHelpers::FObjectFinder<USkeletalMesh> CharacterMeshRef(TEXT(
-		"/Game/Characters/Mannequins/Meshes/SKM_Manny_Simple.SKM_Manny_Simple"));
+		"/Game/InfinityBladeWarriors/Character/CompleteCharacters/SK_CharM_Golden.SK_CharM_Golden"));
 	if (CharacterMeshRef.Object)
 	{
 		GetMesh()->SetSkeletalMesh(CharacterMeshRef.Object);
@@ -42,7 +42,7 @@ AABCharacterBase::AABCharacterBase()
 
 	// Animation
 	static ConstructorHelpers::FClassFinder<UAnimInstance> AnimInstanceClassRef(TEXT(
-		"/Game/Characters/Mannequins/Animations/ABP_Manny.ABP_Manny_C"));
+		"/Game/ArenaBattle/Animation/ABP_ABCharacter.ABP_ABCharacter_C"));
 	if (AnimInstanceClassRef.Class)
 	{
 		GetMesh()->SetAnimInstanceClass(AnimInstanceClassRef.Class);
@@ -60,7 +60,7 @@ AABCharacterBase::AABCharacterBase()
 		"/Game/ArenaBattle/CharacterControl/ABC_Quater.ABC_Quater"));
 	if (QuaterDataRef.Object)
 	{
-		CharacterControlManager.Add(ECharacterControlType::Shoulder, QuaterDataRef.Object);
+		CharacterControlManager.Add(ECharacterControlType::Quater, QuaterDataRef.Object);
 	}
 }
 
