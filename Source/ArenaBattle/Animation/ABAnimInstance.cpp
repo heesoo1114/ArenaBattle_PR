@@ -2,8 +2,8 @@
 
 
 #include "Animation/ABAnimInstance.h"
-#include "GameFramework/Character.h"
-#include "GameFramework/CharacterMovementComponent.h"
+#include <GameFramework/Character.h>
+#include <GameFramework/CharacterMovementComponent.h>
 
 UABAnimInstance::UABAnimInstance()
 {
@@ -34,5 +34,4 @@ void UABAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 		bIsFalling = Movement->IsFalling();
 		bIsJumping = bIsFalling & (Velocity.Z > JumpingThreshould);
 	}
-
 }

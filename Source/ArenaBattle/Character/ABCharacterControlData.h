@@ -13,7 +13,7 @@ UCLASS()
 class ARENABATTLE_API UABCharacterControlData : public UPrimaryDataAsset
 {
 	GENERATED_BODY()
-
+	
 public:
 	UABCharacterControlData();
 
@@ -24,9 +24,8 @@ public:
 	UPROPERTY(EditAnywhere, Category = CharacterMovement)
 	uint32 bOrientRotationToMovement : 1;
 
-	// 목표 회전각
 	UPROPERTY(EditAnywhere, Category = CharacterMovement)
-	uint32 bUseControllerDesiredRotation: 1;
+	uint32 bUseControllerDesiredRotation : 1;
 
 	UPROPERTY(EditAnywhere, Category = CharacterMovement)
 	FRotator RotationRate;
@@ -47,12 +46,11 @@ public:
 	uint32 bInheritPitch : 1;
 
 	UPROPERTY(EditAnywhere, Category = SpringArm)
-	uint32 bInheritRoll : 1;
-
-	UPROPERTY(EditAnywhere, Category = SpringArm)
 	uint32 bInheritYaw : 1;
 
 	UPROPERTY(EditAnywhere, Category = SpringArm)
-	uint32 bDoCollisionTest : 1;
+	uint32 bInheritRoll : 1;
 
+	UPROPERTY(EditAnywhere, Category = SpringArm)
+	uint32 bDoCollisionTest : 1;
 };

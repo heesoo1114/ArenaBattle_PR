@@ -13,6 +13,7 @@ UCLASS()
 class ARENABATTLE_API UABComboActionData : public UPrimaryDataAsset
 {
 	GENERATED_BODY()
+	
 public:
 	UABComboActionData();
 

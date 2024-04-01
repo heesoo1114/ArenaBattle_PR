@@ -23,17 +23,30 @@ public:
 	// Sets default values for this character's properties
 	AABCharacterBase();
 
+// Attack Hit Section
 protected:
 	virtual void AttackHitCheck() override;
 
-	// Character Control Data Section
+	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser) override;
+
+// Dead Section
+protected:
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Stat, Meta = (AllowPrivateAccess="true"))
+	TObjectPtr<class UAnimMontage> DeadMontage;
+
+	float DeadEventDelayTime = 5.0f;
+
+	virtual void SetDead();
+	void PlayDeadAnimation();
+
+// Character Control Data Section
 protected:
 	virtual void SetCharacterControlData(const class UABCharacterControlData* CharacterControlData);
 
 	UPROPERTY(EditAnywhere, Category = CharacterControl, Meta = (AllowPrivateAccess = "true"))
 	TMap<ECharacterControlType, class UABCharacterControlData*> CharacterControlManager;
 
-	// Combo Action Section
+// Combo Action Section
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Animation)
 	TObjectPtr<class UAnimMontage> ComboActionMontage;

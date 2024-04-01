@@ -13,6 +13,7 @@ UCLASS()
 class ARENABATTLE_API UABAnimInstance : public UAnimInstance
 {
 	GENERATED_BODY()
+
 public:
 	UABAnimInstance();
 
@@ -47,6 +48,4 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Character)
 	float JumpingThreshould;
-
-
 };

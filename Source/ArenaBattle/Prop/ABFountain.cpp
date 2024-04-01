@@ -9,30 +9,28 @@ AABFountain::AABFountain()
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
-	// Body
 	Body = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Body"));
 	RootComponent = Body;
 
-	static ConstructorHelpers::FObjectFinder<UStaticMesh> BodyMeshRef(TEXT(
-		"/Game/ArenaBattle/Environment/Props/SM_Plains_Castle_Fountain_01.SM_Plains_Castle_Fountain_01"));
+	static ConstructorHelpers::FObjectFinder<UStaticMesh> BodyMeshRef(TEXT("/Game/ArenaBattle/Environment/Props/SM_Plains_Castle_Fountain_01.SM_Plains_Castle_Fountain_01"));
 
 	if (BodyMeshRef.Object)
 	{
 		Body->SetStaticMesh(BodyMeshRef.Object);
 	}
 
-	// Water
 	Water = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Water"));
-	Water->SetupAttachment(Body); // Body를 부모로 설정
-	Water->SetRelativeLocation(FVector(0.0f, 0.0f, 132.0f)); // 위치 설정
+	Water->SetupAttachment(Body);
+	Water->SetRelativeLocation(FVector(0.0f, 0.0f, 132.0f));
 
-	static ConstructorHelpers::FObjectFinder<UStaticMesh> WaterMeshRef(TEXT(
-		"/Game/ArenaBattle/Environment/Props/SM_Plains_Fountain_02.SM_Plains_Fountain_02"));
+	static ConstructorHelpers::FObjectFinder<UStaticMesh> WaterMeshRef(TEXT("/Game/ArenaBattle/Environment/Props/SM_Plains_Fountain_02.SM_Plains_Fountain_02"));
 
 	if (WaterMeshRef.Object)
 	{
 		Water->SetStaticMesh(WaterMeshRef.Object);
 	}
+
+
 }
 
 // Called when the game starts or when spawned
