@@ -1,9 +1,12 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
+
 #include "Gimmick/ABStageGimmick.h"
 #include <Components/StaticMeshComponent.h>
 #include <Components/BoxComponent.h>
 #include "Physics/ABCollision.h"
+#include "Character/ABCharacterNonPlayer.h"
+#include "Item/ABItemBox.h"
 
 // Sets default values
 AABStageGimmick::AABStageGimmick()
@@ -12,8 +15,7 @@ AABStageGimmick::AABStageGimmick()
 	Stage = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Stage"));
 	RootComponent = Stage;
 
-	static ConstructorHelpers::FObjectFinder<UStaticMesh> StageMeshRef(TEXT(
-		"/Game/ArenaBattle/Environment/Stages/SM_SQUARE.SM_SQUARE"));
+	static ConstructorHelpers::FObjectFinder<UStaticMesh> StageMeshRef(TEXT("/Game/ArenaBattle/Environment/Stages/SM_SQUARE.SM_SQUARE"));
 	if (StageMeshRef.Object)
 	{
 		Stage->SetStaticMesh(StageMeshRef.Object);
@@ -22,14 +24,13 @@ AABStageGimmick::AABStageGimmick()
 	StageTrigger = CreateDefaultSubobject<UBoxComponent>(TEXT("StageTrigger"));
 	StageTrigger->SetupAttachment(Stage);
 	StageTrigger->SetBoxExtent(FVector(775.0f, 775.0f, 300.0f));
-	StageTrigger->SetRelativeLocation(FVector(0.0f, 0.0f, 250.0f));
+	StageTrigger->SetRelativeLocation(FVector(0.0f, 0.0f, 250.f));
 	StageTrigger->SetCollisionProfileName(CPROFILE_ABTRIGGER);
-	StageTrigger->OnComponentBeginOverlap.AddDynamic(this, &AABStageGimmick::OnStageTriggerOverlaped);
+	StageTrigger->OnComponentBeginOverlap.AddDynamic(this, &AABStageGimmick::OnStageTriggerOverlap);
 
 	// Gate Section
 	static FName GateSockets[] = { TEXT("+XGate"), TEXT("-XGate"), TEXT("+YGate"), TEXT("-YGate") };
-	static ConstructorHelpers::FObjectFinder<UStaticMesh> GateMeshRef(TEXT(
-		"/Game/ArenaBattle/Environment/Props/SM_GATE.SM_GATE"));
+	static ConstructorHelpers::FObjectFinder<UStaticMesh> GateMeshRef(TEXT("/Game/ArenaBattle/Environment/Props/SM_GATE.SM_GATE"));
 
 	for (FName GateSocket : GateSockets)
 	{
@@ -39,7 +40,6 @@ AABStageGimmick::AABStageGimmick()
 		{
 			Gate->SetStaticMesh(GateMeshRef.Object);
 		}
-
 		Gate->SetRelativeLocation(FVector(0.0f, -80.5f, 0.0f));
 		Gate->SetRelativeRotation(FRotator(0.0f, -90.0f, 0.0f));
 		Gates.Add(GateSocket, Gate);
@@ -50,7 +50,7 @@ AABStageGimmick::AABStageGimmick()
 		GateTrigger->SetBoxExtent(FVector(100.0f, 100.0f, 300.0f));
 		GateTrigger->SetRelativeLocation(FVector(70.0f, 0.0f, 250.0f));
 		GateTrigger->SetCollisionProfileName(CPROFILE_ABTRIGGER);
-		GateTrigger->OnComponentBeginOverlap.AddDynamic(this, &AABStageGimmick::OnGateTriggerOverlaped);
+		GateTrigger->OnComponentBeginOverlap.AddDynamic(this, &AABStageGimmick::OnGateTriggerOverlap);
 		GateTrigger->ComponentTags.Add(GateSocket);
 
 		GateTriggers.Add(GateTrigger);
@@ -62,6 +62,20 @@ AABStageGimmick::AABStageGimmick()
 	StateChangeActions.Add(EStageState::FIGHT, FStageChangedDelegateWrapper(FOnStageChangedDelegate::CreateUObject(this, &AABStageGimmick::SetFight)));
 	StateChangeActions.Add(EStageState::REWARD, FStageChangedDelegateWrapper(FOnStageChangedDelegate::CreateUObject(this, &AABStageGimmick::SetChooseReward)));
 	StateChangeActions.Add(EStageState::NEXT, FStageChangedDelegateWrapper(FOnStageChangedDelegate::CreateUObject(this, &AABStageGimmick::SetChooseNext)));
+
+	CurrentStageNum = 0;
+
+	// Fight Section
+	OpponentClass = AABCharacterNonPlayer::StaticClass();
+	OpponentSpawnTime = 2.0f;
+
+	// Reward Section
+	RewardBoxClass = AABItemBox::StaticClass();
+	for (FName GateSocket : GateSockets)
+	{
+		FVector BoxLocation = Stage->GetSocketLocation(GateSocket) / 2;
+		RewardBoxLocations.Add(GateSocket, BoxLocation);
+	}
 }
 
 void AABStageGimmick::OnConstruction(const FTransform& Transform)
@@ -71,14 +85,40 @@ void AABStageGimmick::OnConstruction(const FTransform& Transform)
 	SetState(CurrentState);
 }
 
-void AABStageGimmick::OnStageTriggerOverlaped(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+void AABStageGimmick::OnStageTriggerOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-
+	SetState(EStageState::FIGHT);
 }
 
-void AABStageGimmick::OnGateTriggerOverlaped(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+void AABStageGimmick::OnGateTriggerOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
+	check(OverlappedComponent->ComponentTags.Num() == 1);
+	FName ComponentTag = OverlappedComponent->ComponentTags[0];
+	FName SocketName = FName(*ComponentTag.ToString().Left(2));
+	check(Stage->DoesSocketExist(SocketName));
 
+	FVector NewLocation = Stage->GetSocketLocation(SocketName);
+	TArray<FOverlapResult> OverlapResults;
+	FCollisionQueryParams CollisionQueryParam(SCENE_QUERY_STAT(GateTrigger), false, this);
+	bool bResult = GetWorld()->OverlapMultiByObjectType(
+		OverlapResults,
+		NewLocation,
+		FQuat::Identity,
+		FCollisionObjectQueryParams::InitType::AllObjects,
+		FCollisionShape::MakeSphere(775.0f),
+		CollisionQueryParam
+	);
+
+	if (!bResult)
+	{
+		const FTransform SpawnTransform(NewLocation);
+		AABStageGimmick* NewGimmick = GetWorld()->SpawnActorDeferred<AABStageGimmick>(AABStageGimmick::StaticClass(), SpawnTransform);
+		if (NewGimmick)
+		{
+			NewGimmick->SetStageNum(CurrentStageNum + 1);
+			NewGimmick->FinishSpawning(SpawnTransform);
+		}
+	}
 }
 
 void AABStageGimmick::OpenAllGates()
@@ -124,6 +164,8 @@ void AABStageGimmick::SetFight()
 		GateTrigger->SetCollisionProfileName(TEXT("NoCollision"));
 	}
 	CloseAllGates();
+
+	GetWorld()->GetTimerManager().SetTimer(OpponentTimerhandle, this, &AABStageGimmick::OnOpponentSpawn, OpponentSpawnTime, false);
 }
 
 void AABStageGimmick::SetChooseReward()
@@ -134,6 +176,8 @@ void AABStageGimmick::SetChooseReward()
 		GateTrigger->SetCollisionProfileName(TEXT("NoCollision"));
 	}
 	CloseAllGates();
+
+	SpawnRewardBoxes();
 }
 
 void AABStageGimmick::SetChooseNext()
@@ -144,4 +188,66 @@ void AABStageGimmick::SetChooseNext()
 		GateTrigger->SetCollisionProfileName(CPROFILE_ABTRIGGER);
 	}
 	OpenAllGates();
+}
+
+void AABStageGimmick::OnOpponentSpawn()
+{
+	const FTransform SpawnTransform(GetActorLocation() + FVector::UpVector * 88.0f);
+	AABCharacterNonPlayer* ABOpponentCharacter = GetWorld()->SpawnActorDeferred<AABCharacterNonPlayer>(OpponentClass, SpawnTransform);
+
+	if (ABOpponentCharacter)
+	{
+		ABOpponentCharacter->OnDestroyed.AddDynamic(this, &AABStageGimmick::OnOpponentDestroyed);
+		ABOpponentCharacter->SetLevel(CurrentStageNum);
+
+		// 초기화 끝나고 소환 완료
+		ABOpponentCharacter->FinishSpawning(SpawnTransform);
+	}
+}
+
+void AABStageGimmick::OnOpponentDestroyed(AActor* DestroyedActor)
+{
+	SetState(EStageState::REWARD);
+}
+
+void AABStageGimmick::SpawnRewardBoxes()
+{
+	for (const auto& RewardBoxLocation : RewardBoxLocations)
+	{
+		FTransform SpawnTransform(GetActorLocation() + RewardBoxLocation.Value + FVector(0.0f, 0.0f, 30.0f));
+		AABItemBox* RewardBoxActor = GetWorld()->SpawnActorDeferred<AABItemBox>(RewardBoxClass, SpawnTransform);
+
+		if (RewardBoxActor)
+		{
+			RewardBoxActor->Tags.Add(RewardBoxLocation.Key);
+			RewardBoxActor->GetTrigger()->OnComponentBeginOverlap.AddDynamic(this, &AABStageGimmick::OnRewardTriggerBeginOverlap);
+			RewardBoxes.Add(RewardBoxActor);
+		}
+	}
+
+	for (const auto& RewardBox : RewardBoxes)
+	{
+		if (RewardBox.IsValid())
+		{
+			RewardBox.Get()->FinishSpawning(RewardBox.Get()->GetActorTransform());
+		}
+	}
+}
+
+void AABStageGimmick::OnRewardTriggerBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+	for (const auto& RewardBox : RewardBoxes)
+	{
+		if (RewardBox.IsValid())
+		{
+			AABItemBox* ValidItemBox = RewardBox.Get();
+			AActor* OverlappedBox = OverlappedComponent->GetOwner();
+			if (OverlappedBox != ValidItemBox)
+			{
+				ValidItemBox->Destroy();
+			}
+		}
+	}
+
+	SetState(EStageState::NEXT);
 }
