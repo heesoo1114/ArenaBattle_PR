@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
+#include "GameData/ABCharacterStat.h"
 #include "Interface/ABAnimationAttackInterface.h"
 #include "Interface/ABCharacterWidgetInterface.h"
 #include "Interface/ABCharacterItemInterface.h"
@@ -67,6 +68,8 @@ public:
 	int32 GetLevel();
 	void SetLevel(int32 InNewLevel);
 
+	void ApplyStat(const FABCharacterStat& BaseStat, const FABCharacterStat& ModifierStat);
+
 // Attack Hit Section
 protected:
 	virtual void AttackHitCheck() override;
@@ -106,6 +109,8 @@ protected:
 
 	void ComboActionBegin();
 	void ComboActionEnd(class UAnimMontage* TargetMontage, bool IsPropertyEnded);
+
+	virtual void NotifyComboActionEnd();
 
 	void SetComboCheckTimer();
 	void ComboCheck();

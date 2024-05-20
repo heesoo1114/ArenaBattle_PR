@@ -9,6 +9,7 @@
 
 DECLARE_MULTICAST_DELEGATE(FOnHpZeroDelegate)
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnHpChangedDelegate, float /*CurrentHp*/)
+DECLARE_MULTICAST_DELEGATE_TwoParams(FOnStatChangedDelegate, const FABCharacterStat& /*BaseStat*/, const FABCharacterStat& /*ModifierStat*/)
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class ARENABATTLE_API UABCharacterStatComponent : public UActorComponent
@@ -20,17 +21,42 @@ public:
 	UABCharacterStatComponent();
 
 protected:
+	virtual void InitializeComponent() override;
+
 	// Called when the game starts
 	virtual void BeginPlay() override;
 		
 public:
 	FORCEINLINE float GetCurrentHp() { return CurrentHp; }
 	FORCEINLINE float GetCurrentLevel() { return CurrentLevel; }
-	FORCEINLINE void SetMoidifierStat(const FABCharacterStat& InModifierStat) { ModifierStat = InModifierStat; }
+	FORCEINLINE float GetAttackRadius() { return AttackRadius; }
+	FORCEINLINE const FABCharacterStat& GetBaseStat() const { return BaseStat; }
+	FORCEINLINE const FABCharacterStat& GetModifierStat() const { return ModifierStat; }
 	FORCEINLINE FABCharacterStat GetTotalStat() const { return BaseStat + ModifierStat; }
 
 	void SetLevelStat(int32 InNewLevel);
+	FORCEINLINE void SetBaseStat(const FABCharacterStat& InBaseStat) 
+	{
+		BaseStat = InBaseStat;
+		OnStatChanged.Broadcast(GetBaseStat(), GetModifierStat());
+	}
+	FORCEINLINE void SetModifierStat(const FABCharacterStat& InModifierStat)
+	{
+		ModifierStat = InModifierStat;
+		OnStatChanged.Broadcast(GetBaseStat(), GetModifierStat());
+	}
 
+	FORCEINLINE void HealHp(float InHealAmount)
+	{
+		CurrentHp = FMath::Clamp(CurrentHp + InHealAmount, 0, GetTotalStat().MaxHp);
+		OnHpChanged.Broadcast(CurrentHp);
+	}
+
+	FORCEINLINE void AddBaseStat(const FABCharacterStat InAddBaseStat)
+	{
+		BaseStat = BaseStat + InAddBaseStat;
+		OnStatChanged.Broadcast(GetBaseStat(), GetModifierStat());
+	}
 
 	void SetHp(float NewHp);
 	float ApplyDamage(float InDamage);
@@ -38,6 +64,7 @@ public:
 public:
 	FOnHpZeroDelegate OnHpZero;
 	FOnHpChangedDelegate OnHpChanged;
+	FOnStatChangedDelegate OnStatChanged;
 
 protected:
 	UPROPERTY(Transient, VisibleInstanceOnly, Category = Stat)
@@ -45,6 +72,9 @@ protected:
 
 	UPROPERTY(Transient, VisibleInstanceOnly, Category = Stat)
 	float CurrentLevel;
+
+	UPROPERTY(Transient, VisibleInstanceOnly, Category = Stat)
+	float AttackRadius;
 
 	UPROPERTY(Transient, VisibleInstanceOnly, Category = Stat, Meta=(AllowPrivateAccess="true"))
 	FABCharacterStat BaseStat;
